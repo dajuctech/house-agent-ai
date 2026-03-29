@@ -41,6 +41,29 @@ CHANNEL_INSTRUCTIONS = {
 }
 
 
+def gather_details(message: str, channel: str = "email") -> str:
+    if channel == "whatsapp":
+        instruction = "Ask 1-2 short friendly questions to understand the issue better. Keep it casual and under 50 words."
+    elif channel == "sms" or channel == "call":
+        instruction = "Ask one short question to clarify the issue. Plain text. Max 160 characters."
+    else:
+        instruction = "Ask 1-2 polite questions to gather more details about the issue. Keep it under 80 words. Use a professional tone."
+
+    prompt = f"""
+You are a property management assistant. A tenant has sent a vague message and you need more details before you can help.
+
+Tenant message: {message}
+
+{instruction}
+Do not offer solutions yet. Just ask for the missing details.
+"""
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.choices[0].message.content
+
+
 def generate_reply(message: str, intent: str, priority: str, channel: str = "email") -> str:
     policy = find_policy(intent)
     channel_instruction = CHANNEL_INSTRUCTIONS.get(channel, CHANNEL_INSTRUCTIONS["email"])

@@ -2,7 +2,7 @@ from database.tickets import get_or_create_ticket
 from database.messages import log_message
 from database.sheets import get_tickets_sheet
 from ai.classifier import classify_message
-from ai.smart_reply import generate_reply
+from ai.smart_reply import generate_reply, gather_details
 from channels.email_handler import send_email_reply
 from channels.whatsapp_handler import send_whatsapp_reply
 from services.scheduler import offer_repair_slots, book_selected_slot
@@ -16,7 +16,7 @@ def process_incoming_message(sender: str, subject: str, body: str, channel: str 
     # Step 2 — Check if tenant is selecting a repair slot
     if body.strip() in ["1", "2", "3"]:
         slot_number = int(body.strip())
-        confirmation = book_selected_slot(ticket_id, sender, slot_number, subject)
+        confirmation = book_selected_slot(ticket_id, sender, slot_number, subject, channel)
         print(f"Slot {slot_number} booked for {sender}")
         if channel == "email":
             send_email_reply(sender, subject, confirmation)
@@ -46,11 +46,19 @@ def process_incoming_message(sender: str, subject: str, body: str, channel: str 
             sheet.update_cell(i + 2, 7, summary)
             break
 
-    # Step 6 — Generate reply or offer slots
-    if intent == "maintenance":
-        reply = offer_repair_slots(ticket_id, sender, summary)
-    else:
+    # Step 6 — Decide how to respond
+    needs_more_info = classification.get("needs_more_info", False)
+    resolvable_remotely = classification.get("resolvable_remotely", True)
+
+    if needs_more_info:
+        # Ask clarifying questions first
+        reply = gather_details(body, channel)
+    elif resolvable_remotely:
+        # Resolve with AI reply (payment, lease, noise advice, general)
         reply = generate_reply(body, intent, priority, channel)
+    else:
+        # Needs physical visit — offer repair slots
+        reply = offer_repair_slots(ticket_id, sender, summary, channel)
     print(f"Reply generated: {reply[:80]}...")
 
     # Step 7 — Send reply via correct channel
