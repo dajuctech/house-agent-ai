@@ -50,7 +50,7 @@ def process_incoming_message(sender: str, subject: str, body: str, channel: str 
     if intent == "maintenance":
         reply = offer_repair_slots(ticket_id, sender, summary)
     else:
-        reply = generate_reply(body, intent, priority)
+        reply = generate_reply(body, intent, priority, channel)
     print(f"Reply generated: {reply[:80]}...")
 
     # Step 7 — Send reply via correct channel

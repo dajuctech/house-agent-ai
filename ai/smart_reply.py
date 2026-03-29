@@ -18,8 +18,32 @@ def find_policy(intent: str) -> str:
     return ""
 
 
-def generate_reply(message: str, intent: str, priority: str) -> str:
+CHANNEL_INSTRUCTIONS = {
+    "email": (
+        "Write a formal email reply. Use a greeting (e.g. 'Dear Tenant,'), "
+        "full sentences, and a sign-off (e.g. 'Kind regards, House Agent AI'). "
+        "Keep it under 150 words."
+    ),
+    "whatsapp": (
+        "Write a short, friendly WhatsApp message. "
+        "No formal greeting or sign-off needed. Use natural, conversational language. "
+        "Keep it under 80 words."
+    ),
+    "sms": (
+        "Write a very short SMS reply. Plain text only, no formatting. "
+        "Maximum 160 characters. Be direct and clear."
+    ),
+    "call": (
+        "Write a short SMS reply to someone who just left a voicemail. "
+        "Acknowledge their call and give clear next steps. "
+        "Plain text only. Maximum 160 characters."
+    ),
+}
+
+
+def generate_reply(message: str, intent: str, priority: str, channel: str = "email") -> str:
     policy = find_policy(intent)
+    channel_instruction = CHANNEL_INSTRUCTIONS.get(channel, CHANNEL_INSTRUCTIONS["email"])
 
     prompt = f"""
 You are a professional and friendly property management assistant.
@@ -27,11 +51,11 @@ You are a professional and friendly property management assistant.
 Tenant message: {message}
 Intent: {intent}
 Priority: {priority}
+Channel: {channel}
 Policy: {policy if policy else "Use general best practices for property management."}
 
-Write a helpful, empathetic reply to the tenant. 
-- Keep it under 150 words
-- Be professional and friendly
+{channel_instruction}
+- Be professional and empathetic
 - Reference the policy where relevant
 - Give clear next steps
 """
