@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Agent AI — Knowledge Base</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-gray-900 text-white px-6 py-4">
+        <div class="flex items-center justify-between">
+            <a href="/dashboard" class="flex items-center gap-3 hover:opacity-80">
+                <span class="text-2xl">🏠</span>
+                <span class="font-bold text-lg">House Agent AI</span>
+            </a>
+            <div class="hidden md:flex gap-6 text-sm">
+                <a href="/dashboard" class="text-gray-400 hover:text-white transition-colors">Dashboard</a>
+                <a href="/tickets" class="text-gray-400 hover:text-white transition-colors">Tickets</a>
+                <a href="/knowledge-base" class="text-white font-semibold border-b-2 border-white pb-1">Knowledge Base</a>
+                <a href="/calendar" class="text-gray-400 hover:text-white transition-colors">Calendar</a>
+            </div>
+            <button onclick="toggleMenu()" class="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="md:hidden mt-3 border-t border-gray-700 pt-3" style="display:none;">
+            <a href="/dashboard" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white text-sm mb-1 transition-colors">Dashboard</a>
+            <a href="/tickets" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white text-sm mb-1 transition-colors">Tickets</a>
+            <a href="/knowledge-base" class="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-gray-800 text-white font-semibold text-sm mb-1">Knowledge Base</a>
+            <a href="/calendar" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white text-sm transition-colors">Calendar</a>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Knowledge Base</h1>
+                <p class="text-xs sm:text-sm text-gray-400 mt-1">The AI uses these entries to reply to tenants</p>
+            </div>
+            <button onclick="showAddForm()" class="bg-gray-900 text-white px-3 sm:px-4 py-2 rounded-lg text-sm hover:bg-gray-700">
+                + Add Entry
+            </button>
+        </div>
+
+        <!-- Mobile: stacked layout -->
+        <div class="block md:hidden">
+            <!-- Topic list -->
+            <div id="mobile-topic-list" class="bg-white rounded-xl shadow overflow-hidden mb-4">
+                <div class="px-4 py-3 border-b bg-gray-50">
+                    <p class="text-xs font-semibold text-gray-500 uppercase">Topics</p>
+                </div>
+                <ul id="topic-list-mobile" class="divide-y divide-gray-100">
+                    <li class="px-4 py-3 text-sm text-gray-400">Loading...</li>
+                </ul>
+            </div>
+
+            <!-- Detail / Form panel -->
+            <div id="mobile-detail-panel" class="hidden bg-white rounded-xl shadow">
+                <div id="panel-detail-mobile" class="hidden">
+                    <div class="flex items-center justify-between px-4 py-4 border-b">
+                        <div class="flex items-center gap-2">
+                            <span id="detail-icon-m" class="text-xl"></span>
+                            <span id="detail-topic-m" class="font-bold text-gray-800 capitalize"></span>
+                            <span id="detail-badge-m" class="text-xs font-semibold px-2 py-1 rounded-full"></span>
+                        </div>
+                        <button onclick="closeMobileDetail()" class="text-gray-400 text-xl">&times;</button>
+                    </div>
+                    <div class="px-4 py-4">
+                        <div class="flex gap-2 mb-4 flex-wrap">
+                            <button onclick="toggleActive()" class="text-sm px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50">Toggle Active</button>
+                            <button onclick="showEditForm()" class="text-sm px-3 py-1 rounded-lg bg-blue-500 text-white hover:bg-blue-600">Edit</button>
+                            <button onclick="deleteEntry()" class="text-sm px-3 py-1 rounded-lg bg-red-50 text-red-500 hover:bg-red-100">Delete</button>
+                        </div>
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase mb-2">Content</h3>
+                        <p id="detail-content-m" class="text-gray-700 text-sm leading-relaxed mb-4"></p>
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase mb-2">Keywords</h3>
+                        <div id="detail-keywords-m" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <div id="panel-form-mobile" class="hidden">
+                    <div class="flex items-center justify-between px-4 py-4 border-b">
+                        <h2 id="form-title-m" class="font-bold text-gray-800">Add Entry</h2>
+                        <button onclick="cancelForm()" class="text-gray-400 hover:text-gray-700 text-sm">Cancel</button>
+                    </div>
+                    <div class="px-4 py-4 space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Topic</label>
+                            <input id="input-topic" type="text" placeholder="e.g. maintenance"
+                                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Content</label>
+                            <textarea id="input-content" rows="4" placeholder="Write the policy or answer the AI should use..."
+                                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Keywords</label>
+                            <input id="input-keywords" type="text" placeholder="e.g. repair, boiler, heating"
+                                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        </div>
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="cancelForm()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
+                            <button onclick="saveEntry()" class="bg-gray-900 text-white px-5 py-2 rounded-lg text-sm hover:bg-gray-700">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop: Split Panel -->
+        <div class="hidden md:flex gap-6" style="min-height: 520px;">
+            <!-- Left Sidebar -->
+            <div class="w-64 shrink-0 bg-white rounded-xl shadow overflow-hidden">
+                <div class="px-4 py-3 border-b bg-gray-50">
+                    <p class="text-xs font-semibold text-gray-500 uppercase">Topics</p>
+                </div>
+                <ul id="topic-list" class="divide-y divide-gray-100">
+                    <li class="px-4 py-3 text-sm text-gray-400">Loading...</li>
+                </ul>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="flex-1 bg-white rounded-xl shadow">
+                <!-- Empty state -->
+                <div id="panel-empty" class="flex flex-col items-center justify-center h-full text-center py-20">
+                    <div class="text-5xl mb-4">📋</div>
+                    <p class="text-gray-500 font-medium">Select a topic to view</p>
+                    <p class="text-gray-400 text-sm mt-1">or click "+ Add Entry" to create one</p>
+                </div>
+
+                <!-- Detail View -->
+                <div id="panel-detail" class="hidden h-full flex flex-col">
+                    <div class="flex items-center justify-between px-6 py-4 border-b">
+                        <div class="flex items-center gap-3">
+                            <span id="detail-icon" class="text-2xl"></span>
+                            <span id="detail-topic" class="font-bold text-gray-800 text-lg capitalize"></span>
+                            <span id="detail-badge" class="text-xs font-semibold px-2 py-1 rounded-full"></span>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="toggleActive()" class="text-sm px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-50">Toggle Active</button>
+                            <button onclick="showEditForm()" class="text-sm px-3 py-1 rounded-lg bg-blue-500 text-white hover:bg-blue-600">Edit</button>
+                            <button onclick="deleteEntry()" class="text-sm px-3 py-1 rounded-lg bg-red-50 text-red-500 hover:bg-red-100">Delete</button>
+                        </div>
+                    </div>
+                    <div class="px-6 py-6 flex-1">
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase mb-2">Content</h3>
+                        <p id="detail-content" class="text-gray-700 text-sm leading-relaxed mb-6"></p>
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase mb-2">Keywords</h3>
+                        <div id="detail-keywords" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- Edit / Add Form -->
+                <div id="panel-form" class="hidden h-full flex flex-col">
+                    <div class="flex items-center justify-between px-6 py-4 border-b">
+                        <h2 id="form-title" class="font-bold text-gray-800">Add Entry</h2>
+                        <button onclick="cancelForm()" class="text-gray-400 hover:text-gray-700 text-sm">Cancel</button>
+                    </div>
+                    <div class="px-6 py-6 flex-1 space-y-5">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Topic</label>
+                            <input id="input-topic-d" type="text" placeholder="e.g. maintenance"
+                                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Content</label>
+                            <textarea id="input-content-d" rows="5" placeholder="Write the policy or answer the AI should use..."
+                                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Keywords <span class="text-gray-400 normal-case font-normal">(comma separated)</span></label>
+                            <input id="input-keywords-d" type="text" placeholder="e.g. repair, boiler, heating"
+                                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t flex justify-end gap-3">
+                        <button onclick="cancelForm()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
+                        <button onclick="saveEntry()" class="bg-gray-900 text-white px-5 py-2 rounded-lg text-sm hover:bg-gray-700">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        const TOPIC_ICONS = {
+            maintenance: '🔧', emergency: '🚨', rent: '💰',
+            rent_payment: '💰', noise: '🔇', parking: '🚗',
+            pets: '🐾', cleaning: '🧹', security: '🔒', utilities: '💡',
+        };
+
+        let allRecords = [];
+        let selectedIndex = null;
+        let isAdding = false;
+        const isMobile = () => window.innerWidth < 768;
+
+        function topicIcon(topic) {
+            const key = (topic || '').toLowerCase();
+            for (const [k, v] of Object.entries(TOPIC_ICONS)) {
+                if (key.includes(k)) return v;
+            }
+            return '📋';
+        }
+
+        function toggleMenu() {
+            const m = document.getElementById('mobile-menu');
+            m.style.display = m.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function loadKB() {
+            try {
+                const data = await API.getKnowledgeBase();
+                allRecords = data.knowledge_base || [];
+                renderTopicList();
+            } catch (e) {
+                document.getElementById('topic-list').innerHTML = '<li class="px-4 py-3 text-sm text-red-400">Failed to load.</li>';
+                document.getElementById('topic-list-mobile').innerHTML = '<li class="px-4 py-3 text-sm text-red-400">Failed to load.</li>';
+            }
+        }
+
+        function renderTopicList() {
+            const html = allRecords.length === 0
+                ? '<li class="px-4 py-3 text-sm text-gray-400">No entries yet.</li>'
+                : allRecords.map((r, i) => `
+                    <li id="topic-item-${i}" onclick="selectEntry(${i})"
+                        class="flex items-center gap-2 px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                        <span>${topicIcon(r.topic)}</span>
+                        <span class="flex-1 capitalize font-medium text-gray-700">${r.topic || '—'}</span>
+                        <span class="w-2 h-2 rounded-full ${r.active === 'TRUE' ? 'bg-green-400' : 'bg-gray-300'}"></span>
+                    </li>`).join('');
+
+            document.getElementById('topic-list').innerHTML = html;
+            document.getElementById('topic-list-mobile').innerHTML = html.replace(/topic-item-/g, 'topic-item-m-');
+
+            if (selectedIndex !== null && selectedIndex < allRecords.length) {
+                selectEntry(selectedIndex);
+            }
+        }
+
+        function selectEntry(index) {
+            selectedIndex = index;
+            isAdding = false;
+            const r = allRecords[index];
+
+            // Highlight selected
+            document.querySelectorAll('[id^="topic-item-"]').forEach(el => {
+                el.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-500');
+            });
+            ['topic-item-' + index, 'topic-item-m-' + index].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('bg-blue-50', 'border-l-4', 'border-blue-500');
+            });
+
+            const badgeClass = r.active === 'TRUE'
+                ? 'text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700'
+                : 'text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-500';
+            const badgeText = r.active === 'TRUE' ? 'Active' : 'Inactive';
+            const keywords = (r.keywords || '').split(',').map(k => k.trim()).filter(Boolean);
+            const kwHtml = keywords.map(k => `<span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">${k}</span>`).join('');
+
+            // Desktop
+            document.getElementById('detail-icon').textContent = topicIcon(r.topic);
+            document.getElementById('detail-topic').textContent = r.topic || '—';
+            document.getElementById('detail-badge').textContent = badgeText;
+            document.getElementById('detail-badge').className = badgeClass;
+            document.getElementById('detail-content').textContent = r.content || '—';
+            document.getElementById('detail-keywords').innerHTML = kwHtml;
+
+            // Mobile
+            document.getElementById('detail-icon-m').textContent = topicIcon(r.topic);
+            document.getElementById('detail-topic-m').textContent = r.topic || '—';
+            document.getElementById('detail-badge-m').textContent = badgeText;
+            document.getElementById('detail-badge-m').className = badgeClass;
+            document.getElementById('detail-content-m').textContent = r.content || '—';
+            document.getElementById('detail-keywords-m').innerHTML = kwHtml;
+
+            if (isMobile()) {
+                document.getElementById('mobile-detail-panel').classList.remove('hidden');
+                document.getElementById('panel-detail-mobile').classList.remove('hidden');
+                document.getElementById('panel-form-mobile').classList.add('hidden');
+            } else {
+                showPanel('detail');
+            }
+        }
+
+        function closeMobileDetail() {
+            document.getElementById('mobile-detail-panel').classList.add('hidden');
+        }
+
+        function showPanel(name) {
+            ['panel-empty', 'panel-detail', 'panel-form'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(`panel-${name}`).classList.remove('hidden');
+        }
+
+        function showAddForm() {
+            isAdding = true;
+            selectedIndex = null;
+            document.querySelectorAll('[id^="topic-item-"]').forEach(el => {
+                el.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-500');
+            });
+            ['form-title', 'form-title-m'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = 'Add Entry';
+            });
+            ['input-topic', 'input-content', 'input-keywords', 'input-topic-d', 'input-content-d', 'input-keywords-d'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            if (isMobile()) {
+                document.getElementById('mobile-detail-panel').classList.remove('hidden');
+                document.getElementById('panel-detail-mobile').classList.add('hidden');
+                document.getElementById('panel-form-mobile').classList.remove('hidden');
+            } else {
+                showPanel('form');
+            }
+        }
+
+        function showEditForm() {
+            if (selectedIndex === null) return;
+            const r = allRecords[selectedIndex];
+            isAdding = false;
+            ['form-title', 'form-title-m'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = 'Edit Entry';
+            });
+            ['input-topic', 'input-topic-d'].forEach(id => { const el = document.getElementById(id); if (el) el.value = r.topic || ''; });
+            ['input-content', 'input-content-d'].forEach(id => { const el = document.getElementById(id); if (el) el.value = r.content || ''; });
+            ['input-keywords', 'input-keywords-d'].forEach(id => { const el = document.getElementById(id); if (el) el.value = r.keywords || ''; });
+
+            if (isMobile()) {
+                document.getElementById('panel-detail-mobile').classList.add('hidden');
+                document.getElementById('panel-form-mobile').classList.remove('hidden');
+            } else {
+                showPanel('form');
+            }
+        }
+
+        function cancelForm() {
+            if (isMobile()) {
+                if (selectedIndex !== null) {
+                    document.getElementById('panel-form-mobile').classList.add('hidden');
+                    document.getElementById('panel-detail-mobile').classList.remove('hidden');
+                } else {
+                    document.getElementById('mobile-detail-panel').classList.add('hidden');
+                }
+            } else {
+                selectedIndex !== null ? showPanel('detail') : showPanel('empty');
+            }
+        }
+
+        function getInputValue(mobileId, desktopId) {
+            if (isMobile()) return document.getElementById(mobileId)?.value.trim() || '';
+            return document.getElementById(desktopId)?.value.trim() || '';
+        }
+
+        async function saveEntry() {
+            const body = {
+                topic: getInputValue('input-topic', 'input-topic-d'),
+                content: getInputValue('input-content', 'input-content-d'),
+                keywords: getInputValue('input-keywords', 'input-keywords-d')
+            };
+            if (!body.topic || !body.content) { alert('Topic and Content are required.'); return; }
+
+            if (isAdding) {
+                await fetch('/api/knowledge-base', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+                });
+                selectedIndex = null;
+                await loadKB();
+                if (isMobile()) document.getElementById('mobile-detail-panel').classList.add('hidden');
+                else showPanel('empty');
+            } else {
+                const rowId = selectedIndex + 2;
+                await fetch(`/api/knowledge-base/${rowId}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+                });
+                await loadKB();
+                if (isMobile()) {
+                    document.getElementById('panel-form-mobile').classList.add('hidden');
+                    document.getElementById('panel-detail-mobile').classList.remove('hidden');
+                } else showPanel('detail');
+            }
+        }
+
+        async function deleteEntry() {
+            if (selectedIndex === null) return;
+            if (!confirm('Delete this entry?')) return;
+            const rowId = selectedIndex + 2;
+            await fetch(`/api/knowledge-base/${rowId}`, { method: 'DELETE' });
+            selectedIndex = null;
+            await loadKB();
+            if (isMobile()) document.getElementById('mobile-detail-panel').classList.add('hidden');
+            else showPanel('empty');
+        }
+
+        async function toggleActive() {
+            if (selectedIndex === null) return;
+            const rowId = selectedIndex + 2;
+            await fetch(`/api/knowledge-base/${rowId}/toggle`, { method: 'PATCH' });
+            await loadKB();
+        }
+
+        loadKB();
+    </script>
+</body>
+</html>
